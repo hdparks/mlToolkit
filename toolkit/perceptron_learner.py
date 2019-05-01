@@ -6,9 +6,9 @@ MAX_ITER = 100
 # LR is the learning rate, which measures how large a step is taken at each update
 LR = .1
 
-# TOL is the convergence threshold. If the weights between epochs do not change
+# TOL is the convergence threshold. If the error between epochs does not change
 #   more than TOL, we consider the training as converging
-TOL = .5
+TOL = 1
 
 class PerceptronLearner(SupervisedLearner):
     """docstring for PerceptronLearner."""
@@ -28,10 +28,8 @@ class PerceptronLearner(SupervisedLearner):
         #   a.) We've done MAX_ITER iterations
         #   b.) All the outputs are correct (Our model predicts sufficiently well)
         convergence_ticker = 5
-
+        old_error = np.array([np.inf]*labels.label_count)
         for iter in range(MAX_ITER):
-
-            old_weights = weights.copy()
 
             # train one epoch
             for row in range(features.instance_count):
@@ -41,12 +39,14 @@ class PerceptronLearner(SupervisedLearner):
                 output = np.array(input @ weights) > 0
                 output = output.astype(np.int)
 
+                error = output - labels[row]
+
                 # Update the weights
                 weights = weights - LR * np.outer(input, output - labels[row])
 
 
-            # Check to see if weights are converging
-            if np.linalg.norm(weights - old_weights) < TOL:
+            # Check to see if error value is converging
+            if np.linalg.norm(error - old_error) < TOL:
                 convergence_ticker -= 1
 
                 if convergence_ticker is 0:
@@ -56,6 +56,7 @@ class PerceptronLearner(SupervisedLearner):
             else:
                 convergence_ticker = 5
 
+            old_error = error
 
         print("--Training did not converge")
         self.weights = weights
