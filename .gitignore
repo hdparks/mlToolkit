@@ -2,6 +2,11 @@
 __pycache__/
 *.py[cod]
 
+# Implemented components
+implemented/
+datasets/
+*.ipynb
+
 # C extensions
 *.so
 
@@ -21,6 +26,25 @@ var/
 *.egg-info/
 .installed.cfg
 *.egg
+
+# Passwords and cookies
+password.txt
+cookies/
+logs/
+pages/
+Notes/
+dev/
+*.log
+*.html
+profile*
+*profile
+*profile*
+cookies*
+
+# Pycharm project settings
+.idea/
+.idea
+*.xml
 
 # Installer logs
 pip-log.txt
@@ -42,6 +66,16 @@ coverage.xml
 .project
 .pydevproject
 
+# dotenv
+.env
+
+# virtualenv
+venv/
+ENV/
+venv2/
+venv2.7/
+venv*
+
 # Rope
 .ropeproject
 
@@ -51,3 +85,6 @@ coverage.xml
 
 # Sphinx documentation
 docs/_build/
+
+datasets/*
+
