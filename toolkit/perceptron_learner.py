@@ -1,5 +1,7 @@
 from .supervised_learner import SupervisedLearner
 import numpy as np
+from matplotlib import pyplot as plt
+
 # MAX_ITER is the maximum number of epochs to run before termination
 MAX_ITER = 100
 
@@ -75,3 +77,18 @@ class PerceptronLearner(SupervisedLearner):
         predictions = features.data @ self.weights[:-1] > -self.weights[-1]
 
         return  predictions
+
+    def graph_1D_labels(self, features, labels):
+        """
+        Graphs the content of the arff, along with the calculated dividing line
+        according to the calculated weights
+        """
+        # Sort feature data by label
+        label_map = dict()
+        for i,v in enumerate(labels):
+            if v in label_map.keys():
+                label_map.get().append(i)
+            else:
+                label_map[v] = [i]
+
+        
