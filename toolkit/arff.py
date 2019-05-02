@@ -272,14 +272,14 @@ class Arff:
         """
         if row_idx is None:
             row_idx = slice(0,None)
-        end_idx = None if self.label_count == 0 else -self.label_count # return all if no labels
+        end_idx = None if self.label_count == 0 else -1 * self.label_count # return all if no labels
         return self.create_subset_arff(row_idx=row_idx, col_idx=slice(0,end_idx), label_count=0)
 
     def get_labels(self, row_idx=None):
         if row_idx is None:
             row_idx = slice(0,None)
 
-        start_idx = self.shape[1] if -self.label_count == 0 else -self.label_count # return nothing if no labels
+        start_idx = self.shape[1] if self.label_count == 0 else -1 * self.label_count # return nothing if no labels
         new_arff = self.create_subset_arff(row_idx=row_idx, col_idx=slice(start_idx, None), label_count=self.label_count)
         return new_arff
 
@@ -545,4 +545,3 @@ class DoubleDict(dict):
     def __delitem__(self, key):
         dict.__delitem__(self, self[key])
         dict.__delitem__(self, key)
-

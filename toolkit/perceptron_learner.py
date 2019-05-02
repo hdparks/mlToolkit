@@ -71,24 +71,55 @@ class PerceptronLearner(SupervisedLearner):
 
         :type features: [float]
         """
-        if self.weights is None:
-            raise NotImplementedError("Must call train before predict_all")
+        # if None == self.weights:
+        #     raise NotImplementedError("Must call train before predict_all")
 
         predictions = features.data @ self.weights[:-1] > -self.weights[-1]
 
         return  predictions
 
-    def graph_1D_labels(self, features, labels):
+    def graph_2D_features(self, features, labels):
         """
         Graphs the content of the arff, along with the calculated dividing line
         according to the calculated weights
         """
+        # Check to make sure training has already happened
+        # if None == self.weights:
+        #     raise NotImplementedError("Must call train before graph_2D_features")
+
         # Sort feature data by label
         label_map = dict()
-        for i,v in enumerate(labels):
+        for i,v in enumerate(np.ravel(labels.data)):
             if v in label_map.keys():
-                label_map.get().append(i)
+                label_map.get(v).append(i)
             else:
                 label_map[v] = [i]
 
-        
+        # Plot like labels
+        for key in label_map.keys():
+            like_ind = label_map[key]
+            like_data = np.array([features[i] for i in like_ind])
+            plt.scatter(like_data[:,0],like_data[:,1],label=key)
+
+        # Calculate separating hyperplane using weights
+        # w vector is given by [w[0],w[1]], normalized to length of w[2]
+        w = np.array([self.weights[0],self.weights[1]])
+
+        #   Find the min and max in x, y directions
+        xmin = features.column_min(0)
+        xmax = features.column_max(0)
+        ymin = features.column_min(1)
+        ymax = features.column_max(1)
+
+        #   Find the points on the dividing hyperplane
+        #   using p[0]w[0] + p[1]w[1] = 0, or p[1] = -p[0]w[0]/w[1]
+        x_points = [xmin, xmax]
+        y_points = [-xmin * self.weights[0] / self.weights[1], -xmax * self.weights[0] / self.weights[1]]
+
+        plt.xlim(xmin - .5, xmax + .5)
+        plt.ylim(ymin - .5, ymax + .5)
+        plt.legend()
+
+        plt.plot(x_points, y_points, label="Decision line")
+
+        plt.show()
