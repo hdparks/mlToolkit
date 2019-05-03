@@ -17,7 +17,7 @@ TOL = .01
 class PerceptronLearner(SupervisedLearner):
     """docstring for PerceptronLearner."""
 
-    def train(self, features, labels, visualize = False, filename = None):
+    def train(self, features, labels, visualize = False, filename = None,lr=LR):
         """
         Parameters:
             :type features: Matrix, a matrix of input values
@@ -48,7 +48,7 @@ class PerceptronLearner(SupervisedLearner):
 
                 error.append(output - labels[row])
                 # Update the weights
-                weights = weights - LR * np.outer(input, output - labels[row])
+                weights = weights - lr * np.outer(input, output - labels[row])
 
                 weights_tracker.append(weights)
 
@@ -228,8 +228,13 @@ if __name__ == '__main__':
         labels = arff.get_labels()
 
         pl = PerceptronLearner()
+
         if len(sys.argv) >= 4:
-            pl.train(features, labels, visualize=True, filename=sys.argv[3])
+            if len(sys.argv) > 4:
+                pl.train(features, labels, visualize=True, filename = sys.argv[3], lr=float(sys.argv[4]))
+            else:
+                pl.train(features, labels, visualize=True, filename=sys.argv[3])
+
         else:
             pl.train(features, labels, visualize=True)
 
