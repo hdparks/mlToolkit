@@ -108,7 +108,7 @@ class PerceptronLearner(SupervisedLearner):
             1.) Get the next set of weights from the tracker
             2.) Calculate and draw the new divider line
             3.) Update the epoch counter
-            4.) If we are at the end of an epoch, plot a dashed line to track progress
+            4.) If we are at the end of an epoch, plot a dashed divider line to track progress
             """
             w = weights_tracker[i]
             divider.set_data([xmin,xmax],[(-xmin * w[0] - w[2]) / w[1], (-xmax * w[0] - w[2]) / w[1]])
