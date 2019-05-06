@@ -34,8 +34,7 @@ class PerceptronLearner(SupervisedLearner):
         #   b.) All the outputs are correct (Our model predicts sufficiently well)
         weights_tracker = [weights]
         convergence_ticker = 5
-        old_error = np.array([np.inf]*labels.instance_count)
-
+        old_accuracy = np.zeros(features.instance_count)
         for iter in range(MAX_ITER):
             # train one epoch
             error = []
@@ -53,7 +52,9 @@ class PerceptronLearner(SupervisedLearner):
                 weights_tracker.append(weights)
 
             # Check to see if error value is converging
-            delta_error = np.linalg.norm(error - old_error)
+            accuracy = sum(np.array(error)) / features.instance_count
+            delta_error = np.linalg.norm(old_accuracy - accuracy )
+
             if delta_error < TOL:
                 convergence_ticker -= 1
 
@@ -63,8 +64,7 @@ class PerceptronLearner(SupervisedLearner):
             else:
                 convergence_ticker = 5
 
-            old_error = np.array(error)
-
+            old_accuracy = accuracy
 
         self.weights = weights
 
