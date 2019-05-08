@@ -335,7 +335,7 @@ class ToolkitSession:
                 # Get test accuracy
                 test_accuracy = self.learner.measure_accuracy(test_features, test_labels)
                 sum_accuracy += test_accuracy
-                print("Rep={}, Fold={}, Training Accuracy={}, Test Accuracy={}".format(rep_counter, fold_counter,rnd4(training_accuracy) rnd4(test_accuracy)))
+                print("Rep={}, Fold={}, Training Accuracy={}, Test Accuracy={}".format(rep_counter, fold_counter,rnd4(training_accuracy), rnd4(test_accuracy)))
 
                 self.training_accuracy.append(training_accuracy)
                 self.test_accuracy.append(test_accuracy)

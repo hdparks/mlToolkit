@@ -1,0 +1,41 @@
+@Relation restaurants
+
+@Attribute speed Continuous
+@Attribute quality Continuous
+@Attribute healthiness Continuous
+@Attribute class {'fast-food','fine-dining'}
+
+@Data
+
+% Chick-fil-a
+4,4,3,'fast-food'
+
+% In-n-Out
+5,4,3,'fast-food'
+
+% McDonalds
+5,2,1,'fast-food'
+
+% Wendy's
+5,2,2,'fast-food'
+
+% Taco Bell
+4,2,2,'fast-food'
+
+% Chipotle
+4,4,4,'fast-food'
+
+% Zupas
+4,4,5,'fast-food'
+
+% Ruth's Chris Steakhouse
+1,5,4,'fine-dining'
+
+% Du Fromage
+1,5,3,'fine-dining'
+
+% Le Fancy Restaurant
+1,5,4,'fine-dining'
+
+% Gordon Ramsey himself
+1,5,5,'fine-dining'

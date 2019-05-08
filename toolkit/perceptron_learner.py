@@ -4,6 +4,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 
 
+
 # MAX_ITER is the maximum number of epochs to run before termination
 MAX_ITER = 100
 
@@ -12,89 +13,110 @@ LR = .1
 
 # TOL is the convergence threshold. If the error between epochs does not change
 #   more than TOL, we consider the training as converging
-TOL = .01
+TOL = .02
 
 class PerceptronLearner(SupervisedLearner):
     """docstring for PerceptronLearner."""
 
-    def train(self, features, labels, visualize = False, filename = None,lr=LR):
+    def __init__(self, lr=LR, vis=False, file_name=None,verbose=False):
+        self.lr = lr
+        self.visualize = vis
+        self.file_name = file_name
+        self.verbose = verbose
+
+    def train(self, features, labels):
         """
         Parameters:
             :type features: Matrix, a matrix of input values
             :type labels: Matrix, a matrix of expected output values
         """
         ### INITIALIZATION
-        #   Start with random weights in range [-1,1)
-        weights = 2 * np.random.random((features.features_count + 1,labels.label_count)) - 1
-
+        self.features = features
+        self.labels = labels
+        self.weights = 2 * np.random.random(features.features_count + 1) - 1
+        self.accuracy = self.calc_accuracy(features, labels,return_scalar=True)
+        self.weights_tracker = [self.weights]
+        self.accuracy_tracker = [self.accuracy]
 
         ### TRAINING
-        #   Iterate until
-        #   a.) We've done MAX_ITER iterations
-        #   b.) All the outputs are correct (Our model predicts sufficiently well)
-        weights_tracker = [weights]
-        convergence_ticker = 5
-        old_accuracy = np.zeros(features.instance_count)
+        self.convergence_ticker = 5
+
         for iter in range(MAX_ITER):
-            # train one epoch
-            error = []
+
+            # Suffle the features before each new epoch
+            features.shuffle(labels)
+
             for row in range(features.instance_count):
                 input = np.concatenate((features[row],[1]))
 
                 # Calculate the output using the recall function
-                output = np.array(input @ weights) > 0
+                output = input @ self.weights > 0
                 output = output.astype(np.int)
-
-                error.append(output - labels[row])
                 # Update the weights
-                weights = weights - lr * np.outer(input, output - labels[row])
+                self.weights = self.weights + self.lr * input * (labels[row] - output)
+                self.weights_tracker.append(self.weights)
 
-                weights_tracker.append(weights)
+            #   Check for convergence, defined by change in overall accuracy
+            current_accuracy = self.calc_accuracy(features, labels,return_scalar=True)
+            self.accuracy_tracker.append(current_accuracy)
 
-            # Check to see if error value is converging
-            accuracy = sum(np.array(error)) / features.instance_count
-            delta_error = np.linalg.norm(old_accuracy - accuracy )
+            if abs(self.accuracy - current_accuracy) < TOL:
+                self.convergence_ticker -= 1
 
-            if delta_error < TOL:
-                convergence_ticker -= 1
-
-                if convergence_ticker is 0:
-                    print("--Training converged in {} epochs".format(iter + 1))
+                if self.convergence_ticker == 0:
+                    print("Converged in {} epochs".format(iter + 1))
                     break
             else:
-                convergence_ticker = 5
+                self.convergence_ticker = 5
 
-            old_accuracy = accuracy
+            self.accuracy = current_accuracy
 
-        self.weights = weights
+        if self.convergence_ticker != 0:
+            print("Did not converge in {} iterations".format(MAX_ITER))
 
         ### VISUALIZATION
-        if visualize:
-            self.visualize_training(features,labels,weights_tracker,filename)
+        if self.visualize:
+            if features.features_count != 2:
+                print(features.features_count)
+                print("Must be a 2 dimensional feature set to visualize training")
 
+            else:
+                self.visualize_training()
 
-    def visualize_training(self,features,labels,weights_tracker,filename):
+    def predict_all(self, features):
+        """
+        Use the weights calculated by training to predict the output of features
+        self.train must be called before this function
+
+        :type features: [float]
+        """
+        predictions = features.data @ self.weights[:-1] > -self.weights[-1]
+
+        return np.array(predictions).reshape((len(predictions),1))
+
+    def visualize_training(self):
         """
         Show an animation of the training process
         """
+
         print("Visualizing training")
         fig = plt.figure()
         ax = fig.add_subplot(111)
 
         # Take out each feature type, one at a time
-        label_map = get_label_map(labels)
+        label_map = get_label_map(self.labels)
 
         for key in label_map.keys():
             like_ind = label_map[key]
-            like_data = np.array([features[i] for i in like_ind])
+            like_data = np.array([self.features[i] for i in like_ind])
 
             plt.scatter(like_data[:,0],like_data[:,1],label=key)
 
         # get limits
-        xmin = features.column_min(0) - .5
-        xmax = features.column_max(0) + .5
-        ymin = features.column_min(1) - .5
-        ymax = features.column_max(1) + .5
+        xmin = self.features.column_min(0) - .5
+        xmax = self.features.column_max(0) + .5
+        ymin = self.features.column_min(1) - .5
+        ymax = self.features.column_max(1) + .5
 
         plt.xlim(xmin,xmax)
         plt.ylim(ymin,ymax)
@@ -110,71 +132,25 @@ class PerceptronLearner(SupervisedLearner):
             3.) Update the epoch counter
             4.) If we are at the end of an epoch, plot a dashed divider line to track progress
             """
-            w = weights_tracker[i]
+            epoch = i//self.features.instance_count
+            w = self.weights_tracker[i]
+            a = self.accuracy_tracker[epoch]
             divider.set_data([xmin,xmax],[(-xmin * w[0] - w[2]) / w[1], (-xmax * w[0] - w[2]) / w[1]])
-            epoch_tracker.set_text(i//features.instance_count + 1)
+            epoch_tracker.set_text("{} {}".format(epoch + 1, a))
 
             # Keep a shadow of the hyperplane at the end of each epoch
-            if i % features.instance_count == 0:
+            if i % self.features.instance_count == 0:
                 plot_hyperplane(w,xmin,xmax,iter = i, alpha = .3, color='black',linestyle='dashed')
 
             return divider
-
-        ani = animation.FuncAnimation(fig, update, frames=range(len(weights_tracker)), interval=250,repeat=False)
+        from matplotlib import animation
+        ani = animation.FuncAnimation(fig, update, frames=range(len(self.weights_tracker)), interval=250,repeat=False)
         plt.legend()
 
-        if filename:
-            ani.save(filename, writer='imagemagick', fps=5)
+        if self.file_name != None:
+            ani.save(self.file_name, writer='imagemagick', fps=5)
         plt.show()
 
-    def predict_all(self, features):
-        """
-        Use the weights calculated by training to predict the output of features
-        self.train must be called before this function
-
-        :type features: [float]
-        """
-
-        predictions = features.data @ self.weights[:-1] > -self.weights[-1]
-
-        return predictions
-
-    def graph_2D_features(self, features, labels):
-        """
-        Graphs the content of the arff, along with the calculated dividing line
-        according to the calculated weights
-        """
-        # Plot feature points
-        plot_2D_features(features, labels)
-
-        w = np.array(self.weights)
-
-        #   Find the min and max in x, y directions
-        xmin = features.column_min(0) - .5
-        xmax = features.column_max(0) + .5
-        ymin = features.column_min(1) - .5
-        ymax = features.column_max(1) + .5
-
-        plot_hyperplane(w,xmin, xmax)
-
-        plt.xlim(xmin, xmax)
-        plt.ylim(ymin, ymax)
-        plt.legend()
-
-        plt.show()
-
-def plot_2D_features(features, labels):
-    """
-    Make a scatterplot of the features, labeled according to the same labels
-    """
-    # Sort feature data by label
-    label_map = get_label_map(labels)
-
-    # Plot like labels
-    for key in label_map.keys():
-        like_ind = label_map[key]
-        like_data = np.array([features[i] for i in like_ind])
-        plt.scatter(like_data[:,0],like_data[:,1],label=key)
 
 def plot_hyperplane(w, xmin, xmax, iter = None, alpha=None, color=None,linestyle=None):
     """
@@ -198,48 +174,3 @@ def get_label_map(labels):
         else:
             label_map[v] = [i]
     return label_map
-
-
-
-
-if __name__ == '__main__':
-    import sys
-
-    if len(sys.argv) < 2:
-        raise ValueError("invalid arguments")
-
-
-    if sys.argv[1] == "plot":
-        print("Attempting to plot dividing line")
-
-        arff = Arff(sys.argv[2])
-        features = arff.get_features()
-        labels = arff.get_labels()
-        pl = PerceptronLearner()
-        pl.train(features, labels)
-        pl.graph_2D_features(features, labels)
-
-    elif sys.argv[1] == "visualize_training":
-        from matplotlib import animation
-        print("Visualizing training")
-
-        arff = Arff(sys.argv[2])
-        features = arff.get_features()
-        labels = arff.get_labels()
-
-        pl = PerceptronLearner()
-
-        if len(sys.argv) >= 4:
-            if len(sys.argv) > 4:
-                pl.train(features, labels, visualize=True, filename = sys.argv[3], lr=float(sys.argv[4]))
-            else:
-                pl.train(features, labels, visualize=True, filename=sys.argv[3])
-
-        else:
-            pl.train(features, labels, visualize=True)
-
-        predictions = pl.predict_all(features)
-        print("accuracy =", sum(predictions == labels.data)[0]/len(predictions))
-
-    else:
-        raise ValueError("invalid arguments")
