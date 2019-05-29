@@ -3,6 +3,7 @@ from __future__ import (absolute_import, division, print_function, unicode_liter
 from .supervised_learner import SupervisedLearner
 from .baseline_learner import BaselineLearner
 from .perceptron_learner import PerceptronLearner
+from .mlp_learner import MultilayerPerceptronLearner
 from .arff import Arff
 import random
 import argparse
@@ -77,7 +78,7 @@ class MLSystemManager:
         modelmap = {
             "baseline": BaselineLearner,
             "perceptron": PerceptronLearner,
-            # "mlp": MultilayerPerceptronLearner,
+            "mlp": MultilayerPerceptronLearner,
             # "decisiontree": DecisionTreeLearner,
             # "knn": InstanceBasedLearner
         }
