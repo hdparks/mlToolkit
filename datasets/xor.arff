@@ -1,0 +1,24 @@
+% 1. Title: XOR
+% 2. Sources:
+%   (a) Creator: Hayden Parkinson
+%   (b) Institution: BYU
+%   (c) Date: May 2019
+%
+
+@RELATION PerceptronNonSeparable
+
+@ATTRIBUTE attr1 Continuous
+@ATTRIBUTE attr2 Continuous
+@ATTRIBUTE class {0,1}
+
+@DATA
+
+-1,-1,1
+1,1,1
+-1,1,1
+1,-1,1
+0,0,1
+-1,0,0
+1,0,0
+0,-1,0
+0,1,0

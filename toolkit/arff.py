@@ -182,7 +182,7 @@ class Arff:
     @property
     def features_count(self):
         """Get the number of columns (or attributes) in the matrix"""
-        return self.data.shape[1] - self.label_count
+        return self.data.shape[1] - (self.label_count if self.label_count else 0)
 
     def create_subset_arff(self, row_idx=None, col_idx=None, label_count=None):
         """ This returns a new arff file with specified slices; both objects reference same underlying data
