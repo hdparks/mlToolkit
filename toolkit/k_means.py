@@ -13,18 +13,28 @@ class KMeans():
 
         # Tracking varibales
         self.centroids = []
-        self.cluster_idxs = []
+        self.clusters = []
         self.sse_cluster = []
         self.sse_total = []
 
     def train(self, dataset, verbose = False, centers = None):
         """ Trains until k clusters have stabilized """
+        self.data = dataset.data
+        self.instance_count = dataset.instance_count
 
         # INITIALIZATION
         n = len(dataset.data[0])
         self.nominal_indicies = np.where(np.array(dataset.attr_types) == 'nominal')[0]
 
 
+        # Caclulate distances
+        self.distances = np.zeros((dataset.instance_count, dataset.instance_count))
+        for i, point_a in enumerate(self.data):
+            for j, point_b in enumerate(self.data[:i]):
+                self.distances[i,j] = self.get_distance(point_a, point_b)
+        # Make it symmetrical
+        self.distances += self.distances.T
+        self.distances = np.array(self.distances)
         # choose k cluster centers as random instances
         if type(centers) != type(None):
             self.centers = centers
@@ -58,7 +68,7 @@ class KMeans():
                 clusters[fav_point].append(point)
                 i_clusters[fav_point].append(i)
 
-            self.cluster_idxs.append(i_clusters)
+            self.clusters.append(i_clusters)
 
             # Move cluster center to the mean average
             new_centers = np.array([self.calc_mean_av(cluster) for cluster in clusters])
@@ -92,7 +102,7 @@ class KMeans():
                     print(c)
 
                 print('instances in centroid:')
-                for idx in self.cluster_idxs[i]:
+                for idx in self.clusters[i]:
                     print(len(idx),idx)
 
                 print('cluster sse')
@@ -101,6 +111,16 @@ class KMeans():
 
                 print('total cluster sse:')
                 print(self.sse_total[i])
+        else:
+            print('k',self.k)
+            print('centroids')
+            print(self.centroids[-1])
+            print('cluster sse')
+            for i in self.sse_cluster[-1]:
+                print(i)
+            print('total cluster')
+            print(self.sse_total[-1])
+        return self.sse_total[-1]
 
 
     def get_distance(self, point_a, point_center):
@@ -150,3 +170,28 @@ class KMeans():
 
     def get_attributes(self,index):
         return list(self.dataset.enum_to_str[index].keys())
+
+    def calc_silhouette_score(self):
+        print('calculating silhouette scores')
+        # Get clusters
+        silhouette_index = np.zeros(self.instance_count)
+        for i, point in enumerate(self.data):
+            cluster_scores = np.zeros(len(self.clusters[-1]))
+            my_cluster = None
+            for cl, cluster in enumerate(self.clusters[-1]):
+                if i in cluster:
+                    sd = self.distances[cluster,i]
+                    cluster_scores[cl] = sum(sd) / (len(cluster) - 1)
+                    my_cluster = cl
+                else:
+                    sd = sum(self.distances[cluster,i])
+                    cluster_scores[cl] = sd / len(cluster)
+            # Take min of cluster score that isnt current cluster
+            a = cluster_scores[my_cluster]
+            if a == 0:
+                silhouette_index[i] = 0
+            else:
+                b = min(cluster_scores[np.arange(self.k) != my_cluster])
+                silhouette_index[i] = (b - a)/max(a,b)
+
+        return sum(silhouette_index)/len(silhouette_index)

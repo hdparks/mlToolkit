@@ -6,11 +6,22 @@ class HAC():
     def __init__(self, simple=True):
         self.simple = simple
 
-    def train(self, dataset, verbose = False, printk = []):
+    def train(self, dataset, verbose = False, printk = [], silhouette = False):
+        output = []
         # INITIALIZATION
         self.nominal_indicies = np.where(np.array(dataset.attr_types) == 'nominal')[0]
         self.data = dataset.data
+        self.instance_count = dataset.instance_count
         self.n = self.data.shape[1]
+
+        # Calculate the distance from every node to every other node (O(n^2))
+        self.distances = np.zeros((self.instance_count,self.instance_count))
+        for i in range(self.instance_count):
+            for j in range(i+1,self.instance_count):
+                self.distances[i,j] = self.get_distance(self.data[i], self.data[j])
+
+        # Make symmetrical
+        self.distances += self.distances.T
 
         # Turn every point into its own cluster
         self.clusters = []
@@ -51,7 +62,11 @@ class HAC():
                     print(s)
 
                 print("total sse:", sum(sses))
+                output.append(sum(sses))
+                if silhouette:
+                    print(self.calc_silhouette_score())
 
+        return output
 
 
     def find_nearest_cluster(self):
@@ -63,7 +78,9 @@ class HAC():
                 point_distances = np.ones((len(cluster_a),len(cluster_b)))
                 for a, point_a in enumerate(cluster_a):
                     for b, point_b in enumerate(cluster_b):
-                        point_distances[a,b] = self.get_distance(self.data[point_a],self.data[point_b])
+                        # print(self.distances[point_a,point_b])
+                        point_distances[a,b] = self.distances[point_a,point_b]
+                        # print(point_distances[a,b])
 
                 # Get the optimal distance according to distance rule
                 if self.simple:
@@ -115,3 +132,28 @@ class HAC():
             sse += self.get_distance(point,centroid)
 
         return sse
+
+    def calc_silhouette_score(self):
+        print('calculating silhouette scores')
+        # Get clusters
+        silhouette_index = np.zeros(self.instance_count)
+        for i, point in enumerate(self.data):
+            cluster_scores = np.zeros(len(self.clusters))
+            my_cluster = None
+            for cl, cluster in enumerate(self.clusters):
+                if i in cluster:
+                    sd = self.distances[cluster,i]
+                    cluster_scores[cl] = sum(sd) / (len(cluster) - 1)
+                    my_cluster = cl
+                else:
+                    sd = sum(self.distances[cluster,i])
+                    cluster_scores[cl] = sd / len(cluster)
+            # Take min of cluster score that isnt current cluster
+            a = cluster_scores[my_cluster]
+            if a == 0:
+                silhouette_index[i] = 0
+            else:
+                b = min(cluster_scores[np.arange(len(self.clusters)) != my_cluster])
+                silhouette_index[i] = (b - a)/max(a,b)
+
+        return sum(silhouette_index)/len(silhouette_index)

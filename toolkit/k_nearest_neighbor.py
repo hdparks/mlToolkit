@@ -26,6 +26,7 @@ class KNN():
         closest_class = np.zeros(inputs.instance_count)
 
         for n, input in enumerate(inputs):
+            print(n)
             indicies, neighbor_distances = self.closest_neighbor_indicies(features.data, input.data)
 
             # Get a list of classes within the closest neighbors
@@ -112,7 +113,7 @@ class KNN():
         for nom in self.nominal_indicies:
             self.vdmd.append(self.build_vdma(nom))
 
-        
+
     def build_vdma(self, col_idx):
         n = len(self.features.enum_to_str[col_idx])
         vdma = np.zeros((n,n))
